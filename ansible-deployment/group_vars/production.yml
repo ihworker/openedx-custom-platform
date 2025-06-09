@@ -1,0 +1,26 @@
+---
+openedx_lms_domain: "learn.example.com"
+openedx_cms_domain: "studio.learn.example.com"
+
+tutor_enable_https: true
+tutor_enable_web_proxy: true
+ssl_certificate_email: "admin@example.com"
+
+tutor_worker_replicas: 2
+tutor_web_replicas: 2
+
+monitoring_enabled: true
+log_level: "WARNING"
+log_retention_days: 90
+
+backup_enabled: true
+backup_s3_bucket: "openedx-backups"
+backup_retention_days: 90
+
+tutor_cache_redis_replicas: 2
+tutor_mysql_charset: "utf8mb4"
+
+smtp_host: "smtp.example.com"
+smtp_port: 587
+smtp_use_tls: true
+smtp_username: "noreply@example.com"

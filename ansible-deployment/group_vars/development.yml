@@ -1,0 +1,12 @@
+---
+openedx_lms_domain: "local.openedx.io"
+openedx_cms_domain: "studio.local.openedx.io"
+
+tutor_enable_https: false
+tutor_enable_web_proxy: false
+
+backup_enabled: false
+monitoring_enabled: false
+
+tutor_dev_mode: true
+tutor_mount_path: "/home/{{ ansible_user }}/openedx-project"

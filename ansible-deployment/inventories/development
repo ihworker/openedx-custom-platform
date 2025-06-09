@@ -1,0 +1,6 @@
+[openedx_servers]
+localhost ansible_connection=local
+
+[openedx_servers:vars]
+ansible_user=ubuntu
+tutor_environment=development

@@ -1,0 +1,21 @@
+import os
+from tutor import hooks
+
+@hooks.Filters.CONFIG_DEFAULTS.add()
+def _update_mfe_apps(config):
+    config.setdefault("MFE_APPS", {})
+    config["MFE_APPS"]["authn"] = {
+        "repository": "https://github.com/{{ github_username }}/frontend-app-authn.git",
+        "version": "custom-modifications",
+        "port": 1999,
+    }
+    return config
+
+@hooks.Filters.ENV_PATCHES.add()
+def _env_patches(patches):
+    patches.append("""
+# Custom MFE Environment Variables
+AUTHN_CUSTOM_BRANDING=true
+PLATFORM_NAME="{{ openedx_platform_name }}"
+""")
+    return patches

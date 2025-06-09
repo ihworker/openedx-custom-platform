@@ -1,0 +1,32 @@
+---
+tutor_version: "latest"
+tutor_plugins:
+  mfe:
+  enabled: true
+  custom-authn-mfe:
+  enabled: true
+
+openedx_platform_name: "Custom Open edX Platform"
+openedx_contact_email: "admin@example.com"
+openedx_language_code: "en"
+
+tutor_lms_host: "{{ openedx_lms_domain | default('openedx.example.com') }}"
+tutor_cms_host: "{{ openedx_cms_domain | default('studio.openedx.example.com') }}"
+
+mfe_apps:
+  authn:
+    repository: "https://github.com/{{ github_username }}/frontend-app-authn.git"
+    version: "custom-modifications"
+    port: 1999
+
+tutor_enable_https: true
+tutor_enable_web_proxy: true
+
+docker_compose_version: "v2.36.2"
+
+backup_enabled: true
+backup_schedule: "0 2 * * *"
+backup_retention_days: 30
+
+monitoring_enabled: true
+log_level: "INFO"

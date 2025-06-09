@@ -1,0 +1,124 @@
+---
+- name: Prepare System and Create Tutor User
+  hosts: openedx_servers
+  become: yes
+  gather_facts: yes
+  
+  vars_files:
+  - ../group_vars/openedx_servers.yml
+
+  vars:
+    github_username: "{{ lookup('env', 'GITHUB_USERNAME') | default('your-github-username') }}"
+    
+  pre_tasks:
+    - name: Update system packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+        
+    - name: Install required system packages
+      apt:
+        name:
+          - curl
+          - wget
+          - git
+          - python3
+          - python3-pip
+          - python3-venv
+          - libuser
+        state: present
+        
+    - name: Install Docker
+      include_tasks: ../tasks/install-docker.yml
+      
+  tasks:
+    - name: Ensure group 'tutor' exists
+      group:
+        name: tutor
+        state: present
+
+    - name: Create tutor user
+      user:
+        name: tutor
+        group: docker
+        home: /opt/tutor
+        shell: /bin/bash
+        create_home: yes
+        
+    - name: Create directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: tutor
+        group: tutor
+        mode: '0755'
+      loop:
+        - /opt/tutor
+        - /opt/tutor/plugins
+        - /opt/tutor/config
+
+- name: Deploy Open edX with Tutor and Custom MFE
+  hosts: openedx_servers
+  become: yes
+  gather_facts: no # Можно не собирать факты заново
+
+  vars_files:
+  - ../group_vars/openedx_servers.yml
+
+  vars:
+    github_username: "{{ lookup('env', 'GITHUB_USERNAME') | default('your-github-username') }}"
+
+  tasks:
+    
+    - name: Deploy custom MFE plugin
+      template:
+        src: ../templates/custom-authn-mfe.py.j2
+        dest: /opt/tutor/plugins/custom-authn-mfe.py
+        owner: tutor
+        group: tutor
+        mode: '0644'
+        
+    - name: Deploy Tutor using ansible-role-tutor
+      include_role:
+        name: tutor
+      vars:
+        tutor_config:
+          LMS_HOST: "{{ tutor_lms_host }}"
+          CMS_HOST: "{{ tutor_cms_host }}"
+          PLATFORM_NAME: "{{ openedx_platform_name }}"
+          CONTACT_EMAIL: "{{ openedx_contact_email }}"
+          LANGUAGE_CODE: "{{ openedx_language_code }}"
+          
+  post_tasks:
+    - name: Enable custom MFE plugin
+      become_user: tutor
+      shell: |
+        cd /opt/tutor
+        tutor plugins enable custom-authn-mfe
+        tutor config save
+        
+    - name: Build custom MFE images
+      become_user: tutor
+      shell: |
+        cd /opt/tutor
+        tutor images build mfe
+        
+    - name: Deploy Open edX platform
+      become_user: tutor
+      shell: |
+        cd /opt/tutor
+        tutor local launch
+        
+    - name: Create superuser
+      become_user: tutor
+      shell: |
+        cd /opt/tutor
+        tutor local do createuser --staff --superuser admin {{ openedx_contact_email }}
+      ignore_errors: yes
+      
+  handlers:
+    - name: restart tutor
+      become_user: tutor
+      shell: |
+        cd /opt/tutor
+        tutor local restart
